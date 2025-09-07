@@ -70,7 +70,7 @@ export const stripeWebhooks = async (request, response) => {
       // handlePaymentIntentSucceeded(paymentIntent);
       break;
     }
-    case "payment_method.payment_failed": {
+    case "payment_intent.payment_failed": {
       const paymentMethod = event.data.object;
       const paymentIntentId = paymentIntentId;
       const session = await stripeInstance.checkout.sessions.list({
