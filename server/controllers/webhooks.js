@@ -1,5 +1,6 @@
 import Purchase from "../models/Purchase.js";
 import User from "../models/User.js";
+import Course from "../models/Course.js";
 import Stripe from "stripe";
 
 export const clerkWebhooks = async (req, res) => {
@@ -69,7 +70,7 @@ export const stripeWebhooks = async (request, response) => {
       // handlePaymentIntentSucceeded(paymentIntent);
       break;
     }
-    case "payment_method.failed": {
+    case "payment_method.payment_failed": {
       const paymentMethod = event.data.object;
       const paymentIntentId = paymentIntentId;
       const session = await stripeInstance.checkout.sessions.list({
