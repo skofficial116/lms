@@ -1,26 +1,66 @@
-import React, { useContext, useState } from "react";
+import React, {  useContext, useEffect, useState } from "react";
 import { AppContext } from "../../context/AppContext";
 import { Line } from "rc-progress";
 import Footer from "../../components/student/Footer";
+import axios from "axios";
+import { toast } from "react-toastify";
 
-const MyEnrolments = () => {
-  const { enrolledCourses, calculateCourseDuration, navigate } =
-    useContext(AppContext);
+const MyEnrollments = () => {
+  const {
+    enrolledCourses,
+    calculateCourseDuration,
+    navigate,
+    userData,
+    fetchUserEnrolledCourses,
+    backendUrl,
+    getToken,
+    calculateNoOfLectures,
+  } = useContext(AppContext);
 
-  const [progressArray, setProgressArray] = useState([
-    { lectureCompleted: 0, totalLectures: 5 },
-    { lectureCompleted: 1, totalLectures: 5 },
-    { lectureCompleted: 3, totalLectures: 5 },
-    { lectureCompleted: 5, totalLectures: 5 },
-    { lectureCompleted: 2, totalLectures: 3 },
-    { lectureCompleted: 3, totalLectures: 3 },
-    { lectureCompleted: 0, totalLectures: 8 },
-    { lectureCompleted: 4, totalLectures: 8 },
-    { lectureCompleted: 8, totalLectures: 8 },
-    { lectureCompleted: 1, totalLectures: 1 },
-    { lectureCompleted: 0, totalLectures: 10 },
-    { lectureCompleted: 7, totalLectures: 10 },
-  ]);
+  const [progressArray, setProgressArray] = useState([]);
+
+  const getCourseProgress = async () => {
+    try {
+      const token = getToken();
+      const tempProgressArray = await Promise.all(
+        enrolledCourses.map(async (course) => {
+          const { data } = await axios.get(
+            `${backendUrl}/api/user/getCourseProgress/`,
+            { courseId: course._id },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          const totalLectures = calculateNoOfLectures(course);
+          const lectureCompleted = data.progressData
+            ? data.progressData.lectureCompleted.length
+            : 0;
+          return { totalLectures, lectureCompleted };
+        })
+      );
+
+      setProgressArray(tempProgressArray);
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  // console.log(enrolledCourses);
+
+  useEffect(() => {   
+    if (userData) {
+      fetchUserEnrolledCourses();
+    }
+  }, [userData]);
+
+
+  useEffect(() => {
+    if(enrolledCourses.length > 0){
+      getCourseProgress();
+    }
+  }, [enrolledCourses]);
 
   return (
     <>
@@ -73,7 +113,7 @@ const MyEnrolments = () => {
                 <td>
                   <button
                     className="px-3 sm:px-5 py-1.5 sm:py-2 bg-blue-600 max-sm:text-xs text-white cursor-pointer"
-                    onClick={() => navigate("/player/" + course.course_id)}
+                    onClick={() => navigate("/player/" + course._id)}
                   >
                     {progressArray[index] &&
                     progressArray[index].lectureCompleted /
@@ -93,4 +133,4 @@ const MyEnrolments = () => {
   );
 };
 
-export default MyEnrolments;
+export default MyEnrollments;

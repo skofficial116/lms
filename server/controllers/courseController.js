@@ -3,13 +3,15 @@ import User from "../models/User.js";
 
 export const getAllCourse = async (req, res) => {
   try {
+    // const courses = await Course.find({ isPublished: true })
+    //   .select(["-courseContent", "-enrolledStudents"])
+    //   .populate({ path: "educator" });
     const courses = await Course.find({ isPublished: true })
-      .select(["-courseContent", "-enrolledStudents"])
       .populate({ path: "educator" });
 
-    res.json({ succuss: true, courses });
+    res.json({ success: true, courses });
   } catch (error) {
-    res.json({ succuss: false, message: error.message });
+    res.json({ success: false, message: error.message });
   }
 };
 
@@ -25,6 +27,8 @@ export const getCourseId = async (req, res) => {
         }
       });
     });
+
+    console.log(courseData);
 
     res.json({ success: true, courseData });
   } catch (error) {

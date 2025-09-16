@@ -1,12 +1,13 @@
 import React from "react";
 import { Route, Routes, useMatch } from "react-router-dom";
 import "quill/dist/quill.snow.css";
+import {ToastContainer} from 'react-toastify';
 
 // Student Imports
 import Home from "./pages/student/Home.jsx";
 import CoursesList from "./pages/student/CoursesList.jsx";
 import CourseDetails from "./pages/student/CourseDetails.jsx";
-import MyEnrolments from "./pages/student/MyEnrolments.jsx";
+import MyEnrollments from "./pages/student/MyEnrollments.jsx";
 import Player from "./pages/student/Player.jsx";
 import Loading from "./components/student/Loading.jsx";
 
@@ -22,6 +23,7 @@ const App = () => {
   const isEducatorRoute = useMatch("/educator/*");
   return (
     <div className="text-default min-h-screen bg-white">
+      <ToastContainer></ToastContainer>
       {!isEducatorRoute &&<Navbar> </Navbar> }
       <Routes>
         {/* Student Routes */}
@@ -29,7 +31,7 @@ const App = () => {
         <Route path="/courseList" element={<CoursesList />} />
         <Route path="/courseList/:input" element={<CoursesList />} />
         <Route path="/course/:id" element={<CourseDetails />} />
-        <Route path="/myEnrollments" element={<MyEnrolments />} />
+        <Route path="/myEnrollments" element={<MyEnrollments />} />
         <Route path="/player/:courseId" element={<Player />} />
         <Route path="/loading/:path" element={<Loading />} />
 

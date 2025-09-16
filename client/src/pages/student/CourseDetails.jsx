@@ -7,31 +7,79 @@ import { Loading } from "../../components/student/Loading";
 import humanizeDuration from "humanize-duration";
 import Youtube from "react-youtube";
 import Footer from "../../components/student/Footer";
+import { toast } from "react-toastify";
+import axios from "axios";
 
 const CourseDetails = () => {
   const { id } = useParams();
   const [courseData, setCourseData] = useState(null);
   const [openSections, setOpenSections] = useState({});
-  const [isAlreadyEnrolled] = useState(true);
   const [playerData, setPlayerData] = useState(null);
-  // const [isAlreadyEnrolled, setIsAlreadyEnrolled] = useState(true);
+  const [isAlreadyEnrolled, setIsAlreadyEnrolled] = useState(true);
   const {
-    allCourses,
     calculateRating,
     calculateChapterTime,
     currency,
     calculateCourseDuration,
     calculateNoOfLectures,
+    backendUrl,
+    userData,
+    getToken,
   } = useContext(AppContext);
 
   const fetchCourseData = async () => {
-    const findCourse = allCourses.find((course) => course._id === id);
-    setCourseData(findCourse);
+    try {
+      const { data } = await axios.get(backendUrl + "/api/course/" + id);
+
+      if (data.success) {
+        console.log(data.courseData);
+        setCourseData(data.courseData);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.message);
+    }
   };
 
+  const enrollCourse = async () => {
+    try {
+      if (!userData) {
+        return toast.warn("Please login to enroll the course");
+      }
+      if (isAlreadyEnrolled) {
+        return toast.info("You are already enrolled in this course");
+      }
+
+      const token = await getToken();
+      const { data } = axios.post(
+        backendUrl + "/api/user/purchase",
+        { courseId: courseData._id },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (data.success) {
+        const { sessionUrl } = data;
+        window.location.replace(sessionUrl);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
   useEffect(() => {
     fetchCourseData();
-  }, [allCourses]);
+  }, []);
+  useEffect(() => {
+    if (userData && courseData) {
+      setIsAlreadyEnrolled(userData.enrolledCourses.includes(courseData._id));
+    }
+  }, []);
 
   const toggleSection = (index) => {
     setOpenSections((prev) => ({ ...prev, [index]: !prev[index] }));
@@ -82,7 +130,9 @@ const CourseDetails = () => {
           </div>
           <p className="text-sm">
             Course by{" "}
-            <span className="text-blue-600 underline">GreatStack</span>
+            <span className="text-blue-600 underline">
+              {courseData.educator}
+            </span>
           </p>
           <div className="pt-8 text-gray-800">
             <h2 className="text-xl font-semibold">Course Structure</h2>
@@ -105,11 +155,11 @@ const CourseDetails = () => {
                         alt="arrow icon"
                       />
                       <p className="font-medium md:text-base text-sm">
-                        {chapter.chapterTitle}
+                        {chapter?.chapterTitle}
                       </p>
                     </div>
                     <p className="text-sm md:text-default">
-                      {chapter.chapterContent.length} lectures -{" "}
+                      {chapter?.chapterContent?.length || 0} lectures -{" "}
                       {calculateChapterTime(chapter)}
                     </p>
                   </div>
@@ -185,13 +235,12 @@ const CourseDetails = () => {
           )}
           <div className="p-5">
             <div className="flex items-center gap-2">
-                
-                <img
-                  className="w-3.5"
-                  src={assets.time_left_clock_icon}
-                  alt="Time Left clock icon"
-                />
-              
+              <img
+                className="w-3.5"
+                src={assets.time_left_clock_icon}
+                alt="Time Left clock icon"
+              />
+
               <p className="text-red-500">
                 {" "}
                 <span className="font-medium">5 days</span> left at this price{" "}
@@ -229,7 +278,7 @@ const CourseDetails = () => {
                 <p>{calculateNoOfLectures(courseData)} lessons</p>
               </div>
             </div>
-            <button className="md:mt-6 mt-4 w-full py-3 rounded bg-blue-600 text-white font-medium">
+            <button onClick={enrollCourse} className="md:mt-6 mt-4 w-full py-3 rounded bg-blue-600 text-white font-medium">
               {isAlreadyEnrolled ? "Already Enrolled" : "Enrol Now"}{" "}
             </button>
             <div className="pt-6">

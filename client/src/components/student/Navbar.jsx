@@ -3,15 +3,41 @@ import { assets } from "../../assets/assets";
 import { Link, useLocation } from "react-router-dom";
 import { useClerk, UserButton, useUser } from "@clerk/clerk-react";
 import { AppContext } from "../../context/AppContext";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 const Navbar = () => {
   const location = useLocation();
   const isCourseListPage = location.pathname.includes("/courseList");
 
-  const { isEducator, navigate } = useContext(AppContext);
+  const { isEducator, navigate, backendUrl, setIsEducator, getToken } =
+    useContext(AppContext);
 
   const { openSignIn } = useClerk();
   const { user } = useUser();
+
+  const becomeEducator = async () => {
+    try {
+      if (isEducator) {
+        navigate("/educator");
+        return;
+      }
+      const token = await getToken();
+      const { data } = await axios.post(
+        backendUrl + "/api/educator/updateRole",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (data.success) {
+        setIsEducator(true);
+        toast.success(data.message);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <div
@@ -30,11 +56,7 @@ const Navbar = () => {
           {user && (
             <>
               {" "}
-              <button
-                onClick={() => {
-                  navigate("/educator");
-                }}
-              >
+              <button onClick={becomeEducator}>
                 {isEducator ? "Educator DashBoard" : "Become Educator"}
               </button>
               |<Link to="/myEnrollments">My Enrollments</Link>
@@ -54,13 +76,15 @@ const Navbar = () => {
       </div>
 
       {/*For mobile screen */}
-      <div className="md:hidden flex items-center gap-2 sm:gap-5 text=grap-500">
+      <div className="md:hidden flex items-center gap-2 sm:gap-5 text-gray-500">
         <div className="flex items-center gap-1 sm:gap-2 max-sm:text-xs">
           {user && (
             <>
               {" "}
-              <button>Become Educator</button>|
-              <Link to="/myEnrollments">My Enrollments</Link>
+              <button onClick={becomeEducator}>
+                {isEducator ? "Educator DashBoard" : "Become Educator"}
+              </button>
+              |<Link to="/myEnrollments">My Enrollments</Link>
             </>
           )}
         </div>

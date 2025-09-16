@@ -2,6 +2,8 @@ import User from "../models/User.js";
 import Purchase from "../models/Purchase.js";
 import Course from "../models/Course.js";
 import Stripe from "stripe";
+import mongoose from "mongoose";
+import CourseProgress from "../models/CourseProgress.js";
 
 export const getUserData = async (req, res) => {
   try {
@@ -23,9 +25,26 @@ export const getUserData = async (req, res) => {
 export const userEnrolledCourses = async (req, res) => {
   try {
     const userId = req.auth.userId;
+    // const courseId = "66bde33c79764c6b95f95be1";
+    // await User.findByIdAndUpdate(
+    //   userId,
+    //   {
+    //     $addToSet: { _enrolledCourses: new mongoose.Types.ObjectId(courseId) },
+    //   },
+    //   { new: true }
+    // );
+    // const userData = await User.findById(userId);
     const userData = await User.findById(userId).populate("_enrolledCourses");
+    // console.log(userData);
+    if (!userData._enrolledCourses) {
+      res.json({ success: false, message: "No Enrolled Courses" });
+    }
 
-    res.json({ success: true, enrolledCourse: userData._enrolledCourses });
+    res.json({
+      success: true,
+      enrolledCourse: userData._enrolledCourses,
+      userDataDemo: userData,
+    });
   } catch (error) {
     res.json({ success: false, message: error.message });
   }
@@ -169,7 +188,7 @@ export const addUserRating = async (req, res) => {
     }
 
     await course.save();
-    res.json({ success: true, message: "Rating added successfully"});
+    res.json({ success: true, message: "Rating added successfully" });
   } catch (error) {
     res.json({ success: false, message: error.message });
   }
